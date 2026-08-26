@@ -1,0 +1,51 @@
+services:
+  redis:
+    image: redis:7
+    container_name: support_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  chroma:
+    image: chromadb/chroma:0.5.5
+    container_name: support_chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"   # Chroma's API is on 8000, we map to 8001 to avoid conflict with our API
+    volumes:
+      - chroma_data:/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: support_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  api:
+    build: .
+    container_name: support_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - chroma
+      - ollama
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_PERSIST_DIR=/data/chroma
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - APP_ENV=development
+    volumes:
+      - .:/app   # hot reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  redis_data:
+  chroma_data:
+  ollama_data:
