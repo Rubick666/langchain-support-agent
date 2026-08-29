@@ -4,6 +4,10 @@ from app.core.config import settings
 from app.core.redis import redis_client
 from app.core.chroma import chroma_client
 from app.routers import health
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from app.services.document_ingestion import ingest_document
+from app.services.retriever import get_retriever
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -32,3 +36,21 @@ app.include_router(health.router)
 @app.get("/")
 async def root():
     return {"message": "Support Agent is running"}
+
+class IngestRequest(BaseModel):
+    file_path: str
+
+@app.post("/ingest")
+async def ingest(request: IngestRequest):
+    try:
+        ingest_document(request.file_path)
+        return {"message": "Document ingested successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Just to test that it works
+@app.post("/retrieve")
+async def retrieve(query: str):
+    retriever = get_retriever()
+    docs = retriever.invoke(query)
+    return {"results": [{"content": doc.page_content, "metadata": doc.metadata} for doc in docs]}

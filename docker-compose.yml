@@ -40,7 +40,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_PERSIST_DIR=/data/chroma
       - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_HOST=http://ollama:11434
       - APP_ENV=development
+      - ANONYMIZED_TELEMETRY=False
     volumes:
       - .:/app   # hot reload
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
