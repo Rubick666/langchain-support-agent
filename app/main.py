@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.redis import redis_client
 from app.core.chroma import chroma_client
-from app.routers import health
+from app.routers import health, chat
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.document_ingestion import ingest_document
@@ -32,6 +32,7 @@ app = FastAPI(
 )
 
 app.include_router(health.router)
+app.include_router(chat.router)
 
 @app.get("/")
 async def root():
